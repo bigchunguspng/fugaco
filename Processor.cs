@@ -44,8 +44,13 @@ public class Processor(Options options)
 
     private string[][]? GetFileGroups()
     {
+        var searchOption = options.Recursive
+            ? SearchOption.AllDirectories
+            : SearchOption.TopDirectoryOnly;
         var files = options.InputPaths
-            .SelectMany(dir => Directory.GetFiles(dir).Where(file => options.Extensions.Any(file.EndsWith)))
+            .SelectMany(path => Directory
+                .GetFiles(path, "*", searchOption)
+                .Where(file => options.Extensions.Any(file.EndsWith)))
             .ToList();
 
         var totalFiles = files.Count;
@@ -141,8 +146,7 @@ public class Processor(Options options)
     private static void Print     (string message) => Console.Write(message);
     private static void PrintError(string message)
     {
-        Console.ForegroundColor = ConsoleColor.Black;
-        Console.BackgroundColor = ConsoleColor.Red;
+        Console.ForegroundColor = ConsoleColor.Red;
         Console.WriteLine(message);
         Console.ResetColor();
     }

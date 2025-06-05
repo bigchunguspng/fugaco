@@ -10,7 +10,7 @@ public class Options
     [Option('o', "output", Required = false, HelpText = "Directory to put results to.", Default = "./fugaco")]
     public string OutputPath { get; set; } = null!;
 
-    [Option('e', "extensions", Required = false, HelpText = "Directories to grab images from.", Default = new[] { ".png", ".jpg", ".jpeg" })]
+    [Option('e', "extensions", Required = false, HelpText = "Supported extensions.", Default = new[] { ".png", ".jpg", ".jpeg" })]
     public IEnumerable<string> Extensions { get; set; } = null!;
 
     [Option('r', "recursive", Required = false, HelpText = "Grab images from subdirectories.")]

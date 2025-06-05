@@ -10,69 +10,10 @@ public class Processor(Options options)
     {
         if (MissingInputs() || FailedToCreateOutput()) return;
 
-        var files = options.InputPaths
-            .SelectMany(dir => Directory.GetFiles(dir).Where(file => options.Extensions.Any(file.EndsWith)))
-            .ToList();
+        var groups = GetFileGroups();
+        if (groups is null) return;
 
-        var totalFiles = files.Count;
-        Print($"FILES FOUND: {totalFiles}\n");
-
-        var groups = new string[options.OutputNumber][];
-        for (var i = 0; i < options.OutputNumber; i++)
-        {
-            var randomFiles = new string[16];
-            for (var j = 0; j < randomFiles.Length; j++)
-            {
-                randomFiles[j] = files[Random.Shared.Next(totalFiles)];
-            }
-
-            groups[i] = randomFiles;
-        }
-
-        var width = options.ImageWidth;
-        var margin = options.MarginWidth;
-        var collageWidth = 4 * width + 5 * margin;
-        var runTimestamp = DateTime.UtcNow.Ticks;
-        var collageNumber = 1;
-        foreach (var group in groups)
-        {
-            Print($"COLLAGE #{collageNumber:00}: {AxB(collageWidth, collageWidth), 9}\n");
-            var pasteX = margin;
-            var pasteY = margin;
-            var imageNumber = 1;
-            using var collage = new Image<Rgb24>(collageWidth, collageWidth, new Rgb24(255, 255, 255));
-            foreach (var file in group)
-            {
-                using var image = Image.Load(file);
-                var aspectRatio = (double)image.Width / image.Height;
-                var albumLike = aspectRatio > 1;
-                var w = (int)(albumLike ? width * aspectRatio : width);
-                var h = (int)(albumLike ? width : width / aspectRatio);
-                var x = albumLike ? (w - width) / 2 : 0;
-                var y = albumLike ? 0 : (h - width) / 2;
-                var cropRect = new Rectangle(x, y, width, width);
-                var pastePoint = new Point(pasteX, pasteY);
-                Print($"\tIMAGE #{imageNumber:00}: {AxB(image.Width, image.Height),9}");
-                Print($" --> scale: {AxB(w, h),9}");
-                Print($" --> crop: {AxB(x, y),9}, {AxB(width, width),9}");
-                Print($" --> paste: {AxB(pasteX, pasteY),9}\n");
-                image.Mutate(ctx => ctx.Resize(w, h).Crop(cropRect));
-                collage.Mutate(ctx => ctx.DrawImage(image, pastePoint, opacity: 1F));
-
-                pasteX += width + margin;
-                if (pasteX >= collageWidth)
-                {
-                    pasteX = margin;
-                    pasteY += width + margin;
-                }
-
-                imageNumber++;
-            }
-
-            var savePath = Path.Combine(options.OutputPath, $"FUGACO-{runTimestamp}-{collageNumber:00}.png");
-            collage.Save(savePath);
-            collageNumber++;
-        }
+        RenderCollages(groups);
     }
 
     private bool MissingInputs()
@@ -101,6 +42,100 @@ public class Processor(Options options)
         }
     }
 
+    private string[][]? GetFileGroups()
+    {
+        var files = options.InputPaths
+            .SelectMany(dir => Directory.GetFiles(dir).Where(file => options.Extensions.Any(file.EndsWith)))
+            .ToList();
+
+        var totalFiles = files.Count;
+        if (totalFiles == 0)
+        {
+            PrintError("[x_x] No files were found.");
+            return null;
+        }
+
+        Print($"FILES FOUND: {totalFiles}\n");
+
+        var groupCount = options.OutputNumber;
+        var groups = new string[groupCount][];
+        for (var i = 0; i < groupCount; i++)
+        {
+            const int length = 16;
+            groups[i] = new string[length];
+            for (var j = 0; j < length; j++)
+            {
+                groups[i][j] = files[Random.Shared.Next(totalFiles)];
+            }
+        }
+
+        return groups;
+    }
+
+    private void RenderCollages(string[][] groups)
+    {
+        var timestamp = DateTime.UtcNow.Ticks;
+
+        var  width = options.ImageWidth;
+        var margin = options.MarginWidth;
+
+        var  targetSize = new Size(width);
+        var collageSize = new Size(4 * width + 5 * margin);
+
+        var collageNumber = 1;
+        foreach (var group in groups)
+        {
+            using var collage = new Image<Rgb24>(collageSize.Width, collageSize.Height, new Rgb24(255, 255, 255));
+
+            Print($"COLLAGE #{collageNumber:00}: {AxB(collageSize), 9}\n");
+
+            var paste = new Point(margin, margin);
+
+            var imageNumber = 1;
+            foreach (var file in group)
+            {
+                using var image = Image.Load(file);
+
+                Print($"\tIMAGE #{imageNumber:00}: {AxB(image.Width, image.Height),9}");
+
+                var crop = GetCropSquare(image.Size);
+
+                Print($" --> crop: {AxB(crop.X, crop.Y),9}, {AxB(crop.Width, crop.Height),9}");
+                Print($" --> scale: {AxB(targetSize),9}");
+                Print($" --> paste: {AxB(paste),9}\n");
+
+                image  .Mutate(ctx => ctx.Crop(crop).Resize(targetSize));
+                collage.Mutate(ctx => ctx.DrawImage(image, paste, opacity: 1F));
+
+                paste.X += width + margin;
+                if (paste.X >= collageSize.Width)
+                {
+                    paste.X = margin;
+                    paste.Y += width + margin;
+                }
+
+                imageNumber++;
+            }
+
+            collage.Save(Path.Combine(options.OutputPath, $"FUGACO-{timestamp}-{collageNumber:00}.jpg"));
+            collageNumber++;
+        }
+    }
+
+    private static Rectangle GetCropSquare(Size source)
+    {
+        var albumLike = source.Width > source.Height;
+        var size = albumLike
+            ? new Size(source.Height)
+            : new Size(source.Width);
+        var point = albumLike
+            ? new Point((source.Width - source.Height) / 2, 0)
+            : new Point(0, (source.Height - source.Width) / 2);
+        return new Rectangle(point, size);
+    }
+
+    private static string AxB(Point p) => AxB(p.X, p.Y);
+    private static string AxB(Size  s) => AxB(s.Width, s.Height);
     private static string AxB(int a, int b) => $"{a}x{b}";
 
     private static void Print     (string message) => Console.Write(message);

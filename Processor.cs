@@ -11,10 +11,12 @@ public class Processor(Options options)
 {
     public void Run()
     {
-        if (MissingInputs() || FailedToCreateOutput()) return;
+        if (MissingInputs()) return;
 
         var groups = GetFileGroups();
         if (groups is null) return;
+
+        if (FailedToCreateOutput()) return;
 
         RenderCollages(groups);
     }

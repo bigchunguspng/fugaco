@@ -1,6 +1,9 @@
 using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Drawing;
+using SixLabors.ImageSharp.Drawing.Processing;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
+using Path = System.IO.Path;
 
 namespace FunnyGalleryCompositor;
 
@@ -109,7 +112,11 @@ public class Processor(Options options)
                 Print($" --> scale: {AxB(targetSize),9}");
                 Print($" --> paste: {AxB(paste),9}\n");
 
-                image  .Mutate(ctx => ctx.Crop(crop).Resize(targetSize));
+                image.Mutate(ctx => ctx.Crop(crop).Resize(targetSize));
+                if (options.Checkbox)
+                {
+                    DrawCheckbox(image, width);
+                }
                 collage.Mutate(ctx => ctx.DrawImage(image, paste, opacity: 1F));
 
                 paste.X += width + margin;
@@ -137,6 +144,15 @@ public class Processor(Options options)
             ? new Point((source.Width - source.Height) / 2, 0)
             : new Point(0, (source.Height - source.Width) / 2);
         return new Rectangle(point, size);
+    }
+
+    private static void DrawCheckbox(Image image, int width)
+    {
+        var thickness = width / 90F;
+        var center = new PointF(width * 5 / 6F, width / 6F);
+        var radius = width / 12F;
+        var circle = new EllipsePolygon(center, radius);
+        image.Mutate(ctx => ctx.Draw(Color.White, thickness, circle));
     }
 
     private static string AxB(Point p) => AxB(p.X, p.Y);

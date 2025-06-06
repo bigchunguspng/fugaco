@@ -24,7 +24,7 @@ internal static class Program
     {  
         var helpText = HelpText.AutoBuild(result, help =>
         {
-            help.Heading = "FUGACO 1.2.1-full-dub-milka-MGL-9+10--extra-epic";
+            help.Heading = "FUGACO 1.2.2-full-dub-milka-MGL-9+10--extra-REAL";
             help.Copyright = string.Empty;
             return HelpText.DefaultParsingErrorsHandler(result, help);
         });

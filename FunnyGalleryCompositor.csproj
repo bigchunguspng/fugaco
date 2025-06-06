@@ -11,7 +11,7 @@
         <AssemblyName>fugaco</AssemblyName>
         <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
         <RollForward>LatestMajor</RollForward>
-        <Version>1.2.1-full-dub-milka-MGL-9+10--extra-epic</Version>
+        <Version>1.2.2-full-dub-milka-MGL-9+10--extra-REAL</Version>
     </PropertyGroup>
 
     <ItemGroup>

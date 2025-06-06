@@ -19,11 +19,11 @@ public class Options
     [Option('n', "number", Required = false, HelpText = "Number of output images.", Default = 4)]
     public int OutputNumber { get; set; }
 
-    [Option('s', "size", Required = false, HelpText = "Width and height of photos in gallery.", Default = 240)]
+    [Option('s', "size", Required = false, HelpText = "Size of photos in gallery, px.", Default = 240)]
     public int ImageWidth { get; set; }
 
-    [Option('m', "margin", Required = false, HelpText = "Width and height of margins between photos.", Default = 10)]
-    public int MarginWidth { get; set; }
+    [Option('m', "margin", Required = false, HelpText = "(Default: size/24) Spacing between photos, px.")]
+    public int MarginWidth { get; set; } = -1;
 
     [Option('c', "checkbox", Required = false, HelpText = "Add decorative checkboxes.")]
     public bool Checkbox { get; set; }

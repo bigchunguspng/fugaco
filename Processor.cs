@@ -18,6 +18,7 @@ public class Processor(Options options)
 
         if (FailedToCreateOutput()) return;
 
+        AdjustOptions();
         RenderCollages(groups);
     }
 
@@ -80,6 +81,14 @@ public class Processor(Options options)
         }
 
         return groups;
+    }
+
+    private void AdjustOptions()
+    {
+        if (options.MarginWidth < 0)
+            options.MarginWidth = (int)Math.Round(options.ImageWidth / 24F);
+        
+        Print($"IMAGE SIZE: {options.ImageWidth,4} px    SPACING: {options.MarginWidth,4} px\n");
     }
 
     private void RenderCollages(string[][] groups)
@@ -150,11 +159,24 @@ public class Processor(Options options)
 
     private static void DrawCheckbox(Image image, int width)
     {
-        var thickness = width / 90F;
-        var center = new PointF(width * 5 / 6F, width / 6F);
-        var radius = width / 12F;
+        var thickness = width / 75F;
+        var offset = width * 0.15F;
+        var center = new PointF(width - offset - 1, offset);
+        var radius = width * 0.088F;
         var circle = new EllipsePolygon(center, radius);
-        image.Mutate(ctx => ctx.Draw(Color.White, thickness, circle));
+        var options = new DrawingOptions
+        {
+            GraphicsOptions = new GraphicsOptions
+            {
+                BlendPercentage = 1F,
+                ColorBlendingMode = PixelColorBlendingMode.Multiply
+            }
+        };
+        image.Mutate(ctx =>
+        {
+            ctx.Fill(options, Color.FromRgb(243, 243, 243), circle);
+            ctx.Draw(Color.White, thickness, circle);
+        });
     }
 
     private static string AxB(Point p) => AxB(p.X, p.Y);
